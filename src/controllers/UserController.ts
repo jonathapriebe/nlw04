@@ -2,6 +2,7 @@ import { Request, Response } from 'express';
 import { getCustomRepository } from 'typeorm';
 import { UsersRepository } from '../repositories/UsersRepository';
 import * as yup from 'yup';
+import { AppError } from '../errors/AppError';
 
 class UserController {
 
@@ -16,21 +17,17 @@ class UserController {
     try {
       await schema.validate(request.body, { abortEarly: false });
     } catch (err) {
-      return response.status(400).json({
-        error: err
-      });
+      throw new AppError(err);
     }
 
     const usersRepository = getCustomRepository(UsersRepository);
 
-    const userAlreadExists = await usersRepository.findOne({
+    const userAlreadyExists = await usersRepository.findOne({
       email
     });
 
-    if (userAlreadExists) {
-      return response.status(400).json({
-        error: "User already exists."
-      });
+    if (userAlreadyExists) {
+      throw new AppError("User already exists.");
     }
 
     const user = usersRepository.create({
